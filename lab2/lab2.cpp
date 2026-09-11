@@ -5,19 +5,36 @@
 #include <iomanip>
 
 using namespace std;
-struct Flight
-{
+// стек
+struct Flight {
     string reis;
     string date;
+    Flight* next = nullptr; 
 };
 
+// односвязный список
 struct Pass {
     string FIO;
-    Flight flight;
+    Flight* flight = nullptr; 
     int vesh;
     double weight;
+    Pass* next = nullptr;
 };
+//добавление в стек
+void pushFlight(Pass* passenger, const string& reis, const string& date) {
+    Flight* newFlight = new Flight;
+    newFlight->reis = reis;
+    newFlight->date = date;
+    newFlight->next = passenger->flight;
+    passenger->flight = newFlight;
+}
 
+void popFlight(Pass* passenger) {
+    if (passenger->flight == nullptr) return;
+    Flight* temp = passenger->flight;
+    passenger->flight = passenger->flight->next;
+    delete temp;
+}
 //проверка фио
 bool prov(const string& fio)
 {
@@ -63,30 +80,30 @@ bool prov_date(const string& date)
     return true;
 }
 //добавление в массив + проверка корректности данных
-void addPass(vector<Pass>& passengers)
+void addPass(Pass*& head)
 {
     Pass passag;
     char choice;
     int mass_mer;
     do {
-        Pass passag;
+        Pass* passag = new Pass;
         while (true) {
             cout << "Введите ФИО:";
-            getline(cin, passag.FIO);
-            if (prov(passag.FIO)) break;
+            getline(cin, passag->FIO);
+            if (prov(passag->FIO)) break;
             cout << "Некорректные данные ФИО! Повторите ввод." << endl;
         }
-
+        string reis, date;
         while (true) {
             cout << "Введите номер рейса:";
-            getline(cin, passag.flight.reis);
-            if (prov_flight(passag.flight.reis)) break;
+            getline(cin, reis;
+            if (prov_flight(reis)) break;
             cout << "Некорректный номер рейса! Повторите ввод." << endl;
         }
         while (true) {
             cout << "Введите дату вылета в формате(ДД.ММ.ГГГГ):";
-            getline(cin, passag.flight.date);
-            if (prov_date(passag.flight.date)) break;
+            getline(cin, date);
+            if (prov_date(date)) break;
             cout << "Некорректная дата! Повторите ввод." << endl;
         }
 
@@ -102,15 +119,15 @@ void addPass(vector<Pass>& passengers)
                 }
             }
             if (fl) {
-                passag.vesh = stoi(str);
-                if (passag.vesh >= 0 && passag.vesh <= 10) {
+                passag->vesh = stoi(str);
+                if (passag->vesh >= 0 && passag->vesh <= 10) {
                     break;
                 }
             }
             cout << "Недопустимое количество вещей! Введите число от 0 до 10." << endl;
         }
 
-        if (passag.vesh != 0) {
+        if (passag->vesh != 0) {
             while (true) {
                 cout << "Укажите в чем измеряется масса ващих вещей [1] - фунт;[2] - кг:";
                 string str;
@@ -150,22 +167,25 @@ void addPass(vector<Pass>& passengers)
                 }
                 if (dot_count > 1) fl = false;
                 if (fl) {
-                    passag.weight = stod(str);
-                    if (passag.weight >= 0.0 && passag.weight <= 220.46 && mass_mer == 1) {
+                    passag->weight = stod(str);
+                    if (passag->weight >= 0.0 && passag->weight <= 220.46 && mass_mer == 1) {
                         break;
                     }
-                    else if (passag.weight >= 0.0 && passag.weight <= 100) break;
+                    else if (passag->weight >= 0.0 && passag->weight <= 100) break;
                 }
                 cout << "Некорректный вес! Повторите ввод." << endl;
             }
 
             if (mass_mer == 1)
             {
-                passag.weight = passag.weight * 0.453592;
+                passag->weight = passag->weight * 0.453592;
             }
         }
-        else passag.weight = 0;
-        passengers.push_back(passag);
+        else passag->weight = 0;
+
+        passag->next = head;
+        head = passag;
+        
         cout << "Данные пассажира успешно добавлены в массив!" << endl;
         cout << "Хотите добавить еще одного пассажира? (y/n):";
         cin >> choice;
@@ -174,62 +194,80 @@ void addPass(vector<Pass>& passengers)
     } while (choice == 'y' || choice == 'Y' || choice == 'н' || choice == 'Н');
 }
 //пузырек для ФИО
-void Sort_FIO(vector<Pass>& passengers)
+void Sort_FIO(Pass* head)
 {
-    if (passengers.empty()) {
-        cout << "Список пуст, сортировать нечего." << endl;
+    if (head == nullptr || head->next == nullptr) {
+        cout << "Список пуст или содержит один элемент, сортировать нечего." << endl;
         return;
     }
 
-    for (int i = 0; i < passengers.size() - 1; i++) {
-        for (int j = 0; j < passengers.size() - i - 1; j++) {
-            if (passengers[j].FIO > passengers[j + 1].FIO) {
-                std::swap(passengers[j], passengers[j + 1]);
+    bool swapp;
+    do {
+        swapp = false;
+        Pass* current = head;
+        while (current->next != nullptr)
+        {
+            if (current->FIO > current->next->FIO)
+            {
+                swap(current->FIO, current->next->FIO);
+                swap(current->flight, current->next->flight);
+                swap(current->vesh, current->next->vesh);
+                swap(current->weight, current->next->weight);
+                swapp = true;
             }
+            current = current->next;
         }
-    }
+    } while (swapp);
     cout << "\nСписок отсортирован по ФИО\n";
 }
 //поиск пассажиров с 1 вещью весом >30 кг
-void resh(vector<Pass> passengers)
+void resh(Pass* head)
 {
     double sr = 0;
-    int fl = 0;
-    if (passengers.empty()) { cout << "Список пуст!"; return; }
+    int fl = 0, count = 0;
+    if (head == nullptr) { cout << "Список пуст!"; return; }
     cout << "\nПассажиры с одной вещью весом более 30 кг:" << endl;
-    for (int i = 0; i < passengers.size(); i++)
+    Pass* current = head;
+    while (current != nullptr)
     {
-        sr += passengers[i].weight;
-        if (passengers[i].vesh == 1 and passengers[i].weight > 30)
+        sr += current->weight;
+        count++;
+        if (current->vesh == 1 and current->weight > 30)
         {
-            cout << passengers[i].FIO << endl;
+            cout << current->FIO << endl;
             fl = 1;
         }
+        current = current->next;
     }
     if (fl == 0) cout << "В списке нет пассажиров с одной вещью весом более 30 кг" << endl;
-    sr /= passengers.size();
-    cout << "\nСредняя масса багажа:" << sr << "[кг]" << endl;
+    cout << "\nСредняя масса багажа:" << sr / count<< "[кг]" << endl;
 }
 //вывод в таблицу
-void CoutPassengers(vector<Pass> passengers) {
-    if (passengers.empty())
+void CoutPassengers(Pass* head) {
+    if (head == nullptr)
     {
         cout << "\nСписок пассажиров пуст" << endl;
         return;
     }
     cout << "\nСписок пассажиров:" << endl;
-    for (int i = 0; i < passengers.size(); i++)
-    {
-        cout << left << "ФИО: " << setw(35) << passengers[i].FIO << " | Рейс: " << setw(10) << passengers[i].flight.reis << " | Дата вылета: "
-            << setw(10) << passengers[i].flight.date << " | Количество вещей: " << setw(10) << passengers[i].vesh
-            << " | Масса вещей[кг]: " << fixed << setprecision(2) << passengers[i].weight << endl;
+    Pass* current = head;
+    int count = 0;
+    while (current != nullptr) {
+        count++;
+        cout << left << "ФИО: " << setw(35) << current->FIO << " | Рейс: " << setw(10) << current->flight->reis << " | Дата вылета: "
+            << setw(10) << current->flight->date << " | Количество вещей: " << setw(10) << current->vesh
+            << " | Масса вещей[кг]: " << fixed << setprecision(2) << current->weight << endl;
+        current = current->next;
     }
-    cout << "Всего пассажиров:" << passengers.size() << endl;
+    cout << "Всего пассажиров:" << count << endl;
 }
 
-
-void loadValidMockData(vector<Pass>& passengers) {
-    //passengers.clear();
+// Вспомогательная функция для генерации тестовой базы
+void addMock(Pass*& head, string fio, string reis, string date, int vesh, double weight) {
+    Pass* p = new Pass{ fio, nullptr, vesh, weight, head };
+    pushFlight(p, reis, date);
+    head = p;
+}
 
     passengers.push_back({ "Иванов Иван Иванович", {"SU100", "12.10.2026"}, 1, 32.50 });
     passengers.push_back({ "John Doe", {"AA123", "15.10.2026"}, 1, 10.00 });
@@ -242,9 +280,31 @@ void loadValidMockData(vector<Pass>& passengers) {
     passengers.push_back({ "Michael Jordan", {"NY23", "17.02.2027"}, 4, 45.00 });
     passengers.push_back({ "Федоров Олег Игоревич", {"A4250", "30.06.2026"}, 1, 30.50 });
 
+void loadValidMockData(Pass*& head) {
+    addMock(head, "Иванов Иван Иванович", "SU100", "12.10.2026", 1, 32.50);
+    addMock(head, "John Doe", "AA123", "15.10.2026", 1, 10.00);
+    addMock(head, "Петров Петр Петрович", "A4250", "28.02.2026", 3, 35.20);
+    addMock(head, "Alice Smith", "LH456", "20.05.2027", 0, 0.00);
+    addMock(head, "Сидоров Сидор Сидорович", "SU100", "01.01.2027", 2, 15.00);
+    addMock(head, "Alex Brown", "BA011", "11.11.2026", 1, 32.00);
+    addMock(head, "Козлов Алексей Сергеевич", "SU200", "19.04.2026", 1, 12.30);
+    addMock(head, "Смирнова Анна Дмитриевна", "DP444", "05.09.2026", 2, 22.10);
+    addMock(head, "Michael Jordan", "NY23", "17.02.2027", 4, 45.00);
+    addMock(head, "Федоров Олег Игоревич", "A4250", "30.06.2026", 1, 30.50);
     cout << "\n[Система]: Массив успешно заполнен 10 тестовыми записями!" << endl;
 }
 
+// Полная очистка всей динамической памяти (профилактика утечек)
+void clearMemory(Pass*& head) {
+    while (head != nullptr) {
+        Pass* tempPass = head;
+        head = head->next;
+        // Очищаем стек рейсов этого пассажира
+        while (tempPass->flight != nullptr) {
+            popFlight(tempPass);
+        }
+        delete tempPass;
+    }
 
 
 int main()
@@ -252,7 +312,7 @@ int main()
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
-    vector<Pass> passengers;
+    Pass* head = nullptr;
     int choice;
 
     do {
@@ -276,19 +336,19 @@ int main()
 
         switch (choice) {
         case 1:
-            addPass(passengers);
+            addPass(head);
             break;
         case 2:
-            Sort_FIO(passengers);
+            Sort_FIO(head);
             break;
         case 3:
-            resh(passengers);
+            resh(head);
             break;
         case 4:
-            CoutPassengers(passengers);
+            CoutPassengers(head);
             break;
         case 5:
-            loadValidMockData(passengers);
+            loadValidMockData(head);//izm
             break;
         case 0:
             cout << "Выход из программы" << endl;
@@ -298,6 +358,6 @@ int main()
         }
 
     } while (choice != 0);
-
+    clearMemory(head);
     return 0;
 }
