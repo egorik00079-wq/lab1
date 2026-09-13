@@ -1,21 +1,22 @@
-﻿#include <iostream>
+#include <iostream>
 #include <string>
 #include <windows.h>
 #include <vector>
 #include <iomanip>
 
 using namespace std;
+
 // стек
 struct Flight {
     string reis;
     string date;
-    Flight* next = nullptr; 
+    Flight* next = nullptr;
 };
 
 // односвязный список
 struct Pass {
     string FIO;
-    Flight* flight = nullptr; 
+    Flight* flight = nullptr;
     int vesh;
     double weight;
     Pass* next = nullptr;
@@ -82,7 +83,7 @@ bool prov_date(const string& date)
 //добавление в массив + проверка корректности данных
 void addPass(Pass*& head)
 {
-    Pass passag;
+    Pass* passag = new Pass;
     char choice;
     int mass_mer;
     do {
@@ -96,7 +97,7 @@ void addPass(Pass*& head)
         string reis, date;
         while (true) {
             cout << "Введите номер рейса:";
-            getline(cin, reis;
+            getline(cin, reis);
             if (prov_flight(reis)) break;
             cout << "Некорректный номер рейса! Повторите ввод." << endl;
         }
@@ -106,7 +107,7 @@ void addPass(Pass*& head)
             if (prov_date(date)) break;
             cout << "Некорректная дата! Повторите ввод." << endl;
         }
-
+        pushFlight(passag, reis, date);
         while (true) {
             cout << "Введите количество вещей:";
             string str;
@@ -185,7 +186,7 @@ void addPass(Pass*& head)
 
         passag->next = head;
         head = passag;
-        
+
         cout << "Данные пассажира успешно добавлены в массив!" << endl;
         cout << "Хотите добавить еще одного пассажира? (y/n):";
         cin >> choice;
@@ -240,7 +241,7 @@ void resh(Pass* head)
         current = current->next;
     }
     if (fl == 0) cout << "В списке нет пассажиров с одной вещью весом более 30 кг" << endl;
-    cout << "\nСредняя масса багажа:" << sr / count<< "[кг]" << endl;
+    cout << "\nСредняя масса багажа:" << sr / count << "[кг]" << endl;
 }
 //вывод в таблицу
 void CoutPassengers(Pass* head) {
@@ -269,16 +270,6 @@ void addMock(Pass*& head, string fio, string reis, string date, int vesh, double
     head = p;
 }
 
-    passengers.push_back({ "Иванов Иван Иванович", {"SU100", "12.10.2026"}, 1, 32.50 });
-    passengers.push_back({ "John Doe", {"AA123", "15.10.2026"}, 1, 10.00 });
-    passengers.push_back({ "Петров Петр Петрович", {"A4250", "28.02.2026"}, 3, 35.20 });
-    passengers.push_back({ "Alice Smith", {"LH456", "20.05.2027"}, 0, 0.00 });
-    passengers.push_back({ "Сидоров Сидор Сидорович", {"SU100", "01.01.2027"}, 2, 15.00 });
-    passengers.push_back({ "Alex Brown", {"BA011", "11.11.2026"}, 1, 32.00 });
-    passengers.push_back({ "Козлов Алексей Сергеевич", {"SU200", "19.04.2026"}, 1, 12.30 });
-    passengers.push_back({ "Смирнова Анна Дмитриевна", {"DP444", "05.09.2026"}, 2, 22.10 });
-    passengers.push_back({ "Michael Jordan", {"NY23", "17.02.2027"}, 4, 45.00 });
-    passengers.push_back({ "Федоров Олег Игоревич", {"A4250", "30.06.2026"}, 1, 30.50 });
 
 void loadValidMockData(Pass*& head) {
     addMock(head, "Иванов Иван Иванович", "SU100", "12.10.2026", 1, 32.50);
@@ -305,10 +296,11 @@ void clearMemory(Pass*& head) {
         }
         delete tempPass;
     }
+}
 
 
 int main()
-{
+    {
     SetConsoleCP(1251);
     SetConsoleOutputCP(1251);
 
