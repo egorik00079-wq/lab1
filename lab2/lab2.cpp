@@ -80,10 +80,43 @@ bool prov_date(const string& date)
 
     return true;
 }
+// 1. Добавление в начало списка
+void addToFront(Pass*& head, Pass* newPass, const string& reis, const string& date) {
+    if (newPass == nullptr) return;
+
+    pushFlight(newPass, reis, date);
+    newPass->next = head;
+    head = newPass;
+}
+
+// 2. Добавление в конец списка
+void addToEnd(Pass*& head, Pass* newPass, const string& reis, const string& date) {
+    if (newPass == nullptr) return;
+    pushFlight(newPass, reis, date);
+    newPass->next = nullptr;
+    if (head == nullptr) {
+        head = newPass;
+        return;
+    } 
+    Pass* current = head;
+    while (current->next != nullptr) {
+        current = current->next;
+    }
+    current->next = newPass;
+}
+
+// 3. Добавление в середину (после указанного узла)
+void insertAfter(Pass* prevPass, Pass* newPass, const string& reis, const string& date) {
+    if (prevPass == nullptr || newPass == nullptr) return;
+
+    pushFlight(newPass, reis, date); 
+    newPass->next = prevPass->next;
+    prevPass->next = newPass;
+}
+
 //добавление в массив + проверка корректности данных
 void addPass(Pass*& head)
 {
-    Pass* passag = new Pass;
     char choice;
     int mass_mer;
     do {
@@ -107,7 +140,6 @@ void addPass(Pass*& head)
             if (prov_date(date)) break;
             cout << "Некорректная дата! Повторите ввод." << endl;
         }
-        pushFlight(passag, reis, date);
         while (true) {
             cout << "Введите количество вещей:";
             string str;
@@ -184,10 +216,59 @@ void addPass(Pass*& head)
         }
         else passag->weight = 0;
 
-        passag->next = head;
-        head = passag;
 
-        cout << "Данные пассажира успешно добавлены в массив!" << endl;
+        int insertChoice;
+        while (true) {
+            cout << "\nКуда добавить пассажира?\n";
+            cout << "1 - В начало списка\n";
+            cout << "2 - В конец списка\n";
+            cout << "3 - В середину (на заданную позицию)\n";
+            cout << "Ваш выбор: ";
+            if (cin >> insertChoice) {
+                if (insertChoice >= 1 && insertChoice <= 3) break;
+            }
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "Неверный ввод! Введите цифру от 1 до 3.\n";
+        }
+        cin.ignore(10000, '\n'); // Очистка буфера после ввода цифры
+
+        if (insertChoice == 1) {
+            addToFront(head, passag, reis, date);
+            cout << "Пассажир добавлен в начало списка!" << endl;
+        }
+        else if (insertChoice == 2) {
+            addToEnd(head, passag, reis, date);
+            cout << "Пассажир добавлен в конец списка!" << endl;
+        }
+        else if (insertChoice == 3) {
+            if (head == nullptr) {
+                cout << "Список был пуст, пассажир автоматически стал первым (в начале)!" << endl;
+                addToFront(head, passag, reis, date);
+            }
+            else {
+                int pos;
+                cout << "Введите номер позиции, НА которую хотите поставить пассажира (начиная с 1): ";
+                while (!(cin >> pos) || pos < 1) {
+                    cin.clear();
+                    cin.ignore(10000, '\n');
+                    cout << "Некорректная позиция! Введите число больше 0: ";
+                }
+                cin.ignore(10000, '\n');
+
+                if (pos == 1) {
+                    addToFront(head, passag, reis, date);
+                }
+                else {
+                    Pass* current = head;
+                    for (int i = 1; i < pos - 1 && current->next != nullptr; i++) {
+                        current = current->next;
+                    }
+                    insertAfter(current, passag, reis, date);
+                }
+                cout << "Пассажир успешно добавлен на позицию " << pos << "!" << endl;
+            }
+        }
         cout << "Хотите добавить еще одного пассажира? (y/n):";
         cin >> choice;
         cin.ignore(10000, '\n');
@@ -255,7 +336,7 @@ void CoutPassengers(Pass* head) {
     int count = 0;
     while (current != nullptr) {
         count++;
-        cout << left << "ФИО: " << setw(35) << current->FIO << " | Рейс: " << setw(10) << current->flight->reis << " | Дата вылета: "
+        cout << left << "№"<< setw(3) << count<< "| ФИО: " << setw(35) << current->FIO << " | Рейс: " << setw(10) << current->flight->reis << " | Дата вылета: "
             << setw(10) << current->flight->date << " | Количество вещей: " << setw(10) << current->vesh
             << " | Масса вещей[кг]: " << fixed << setprecision(2) << current->weight << endl;
         current = current->next;
@@ -297,7 +378,108 @@ void clearMemory(Pass*& head) {
         delete tempPass;
     }
 }
+void deleteFront(Pass*& head)
+{
+    if (head == nullptr) return;
+    Pass* temp = head;
+    head = head->next;
+    if (temp->flight != nullptr) {
+        popFlight(temp);
+    }
+    delete temp;
 
+}
+
+void deleteEnd(Pass*& head)
+{
+    if (head == nullptr) return;
+
+    if (head->next == nullptr) {
+        if (head->flight != nullptr) popFlight(head);
+        delete head;
+        head = nullptr;
+        return;
+    }
+    Pass* current = head;
+    while (current->next->next != nullptr)
+    {
+        current = current->next;
+    }
+    Pass* temp = current->next;
+    current->next = nullptr;
+    if (temp->flight != nullptr) {
+        popFlight(temp);
+    }
+    
+    delete temp;
+}
+
+void deleteCurr(Pass*& head, int pos)
+{
+    if (head == nullptr) return;
+    if (pos == 1) {
+        Pass* temp = head;
+        head = head->next;
+        while (temp->flight != nullptr) popFlight(temp);
+        delete temp;
+        return;
+    }
+
+    Pass* current = head;
+    for (int i = 1; i < pos - 1 && current->next != nullptr; i++) {
+        current = current->next;
+    }
+
+    if (current == nullptr || current->next == nullptr) {
+        cout << "Позиция не найдена!" << endl;
+        return;
+    }
+    Pass* temp = current->next;
+    current->next = temp->next;
+    if (temp->flight != nullptr) {
+        popFlight(temp);
+    }
+    delete temp;
+}
+
+void vib(Pass*& head)
+{
+    int insertChoice;
+        while (true) {
+            cout << "Откуда удалить элемент?\n";
+            cout << "1 - Из начала списка\n";
+            cout << "2 - Из конца списка\n";
+            cout << "3 - Из середины (на заданной позиции)\n";
+            cout << "Ваш выбор: ";
+            if (cin >> insertChoice) {
+                if (insertChoice >= 1 && insertChoice <= 3) break;
+            }
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "Неверный ввод! Введите цифру от 1 до 3.\n";
+        }
+        cin.ignore(10000, '\n');
+        switch (insertChoice)
+        {
+        case 1:
+            deleteFront(head);
+            cout << "Первый пассажир успешно удален!";
+            break;
+        
+        case 2:
+            deleteEnd(head);
+            cout << "Последний пассажир успешно удален!";
+            break;
+        case 3:
+            int pos;
+            cout << "Введите позицию для удаления: ";
+            cin >> pos;
+            deleteCurr(head, pos);
+            cout << "Пассажир под номером "<< pos <<" успешно удален!";
+            break;
+        }
+        
+}
 
 int main()
     {
@@ -314,12 +496,13 @@ int main()
         cout << "3. Решить задачу" << endl;
         cout << "4. Вывести список" << endl;
         cout << "5. Авто-заполнение базы" << endl;
+        cout << "6. Удалить элемент" << endl;
         cout << "0. Выход" << endl;
         cout << "Выберите пункт: ";
 
 
         if (!(cin >> choice)) {
-            cout << "Ошибка! Введите цифру от 0 до 5." << endl;
+            cout << "Ошибка! Введите цифру от 0 до 6." << endl;
             cin.clear();
             cin.ignore(10000, '\n');
             continue;
@@ -340,7 +523,10 @@ int main()
             CoutPassengers(head);
             break;
         case 5:
-            loadValidMockData(head);//izm
+            loadValidMockData(head);
+            break;
+        case 6:
+            vib(head);
             break;
         case 0:
             cout << "Выход из программы" << endl;
