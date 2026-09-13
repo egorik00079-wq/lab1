@@ -1,0 +1,13 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/labs/">
+    <Project Path="Lab1/Lab1.vcxproj" Id="7e1a8e8d-ca46-45d6-a96f-3f300fb164a8" />
+    <Project Path="lab2/lab2.vcxproj" Id="6de28edc-1944-4c0c-9ea8-b4000845e0ac" />
+  </Folder>
+  <Folder Name="/Элементы решения/">
+    <File Path="backup.cpp" />
+  </Folder>
+</Solution>
