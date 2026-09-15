@@ -481,6 +481,157 @@ void vib(Pass*& head)
         
 }
 
+void izm(Pass * &head) {
+
+    if (head == nullptr) {
+        cout << "Список пуст!" << endl;
+        return;
+    }
+
+    int pos;
+    while (true) {
+        cout << "Укажите номер записи, которую вы хотите изменить: ";
+        if (cin >> pos && pos > 0) {
+            break;
+        }
+        cin.clear();
+        cin.ignore(10000, '\n');
+        cout << "Неверный ввод! Введите число больше 0.\n";
+    }
+    cin.ignore(10000, '\n');
+
+    // поиск по позиции и поиск элемента перед искомым 
+    Pass* current = head;
+    for (int i = 1; i < pos && current != nullptr; i++) {
+        current = current->next;
+    }
+
+    if (current == nullptr) {
+        cout << "Позиция не найдена!" << endl;
+        return;
+    }
+
+    int choice;
+    cout << "\nЧто именно вы хотите изменить?" << endl;
+    cout << "1 - ФИО" << endl;
+    cout << "2 - Номер рейса" << endl;
+    cout << "3 - Дата вылета" << endl;
+    cout << "4 - Количество вещей и вес" << endl;
+    cout << "Ваш выбор: ";
+
+    while (!(cin >> choice) || choice < 1 || choice > 4) {
+        cin.clear();
+        cin.ignore(10000, '\n');
+        cout << "Неверный ввод! Выберите пункт от 1 до 4: ";
+    }
+    cin.ignore(10000, '\n');
+
+
+    switch (choice) {
+    case 1: {
+        while (true) {
+            cout << "Введите новое ФИО: ";
+            getline(cin, current->FIO);
+            if (prov(current->FIO)) break;
+            cout << "Некорректные данные ФИО! Повторите ввод." << endl;
+        }
+        break;
+    }
+    case 2: {
+        string new_reis, current_date = "";
+        if (current->flight != nullptr) {
+            current_date = current->flight->date;
+            popFlight(current);
+        }
+        while (true) {
+            cout << "Введите новый номер рейса: ";
+            getline(cin, new_reis);
+            if (prov_flight(new_reis)) break;
+            cout << "Некорректный номер рейса! Повторите ввод." << endl;
+        }
+        pushFlight(current, new_reis, current_date);
+        break;
+    }
+    case 3: {
+        string current_reis = "", new_date;
+        if (current->flight != nullptr)
+        {
+            current_reis = current->flight->reis;
+            popFlight(current);
+        }
+
+        while (true) {
+            cout << "Введите новую дату вылета (ДД.ММ.ГГГГ): ";
+            getline(cin, new_date);
+            if (prov_date(new_date)) break;
+            cout << "Некорректная дата! Повторите ввод." << endl;
+        }
+        pushFlight(current, current_reis, new_date);
+        break;
+    }
+    case 4: {
+        // Ввод количества вещей
+        while (true) {
+            cout << "Введите новое количество вещей: ";
+            string str;
+            getline(cin, str);
+            bool fl = !str.empty();
+            for (char c : str) {
+                if (c < '0' || c > '9') { fl = false; break; }
+            }
+            if (fl) {
+                current->vesh = stoi(str);
+                if (current->vesh >= 0 && current->vesh <= 10) break;
+            }
+            cout << "Недопустимое количество вещей! Введите число от 0 до 10." << endl;
+        }
+
+        // Ввод веса, если вещи есть
+        if (current->vesh != 0) {
+            int mass_mer;
+            while (true) {
+                cout << "Укажите в чем измеряется масса вещей [1] фунт; [2] кг: ";
+                string str;
+                getline(cin, str);
+                if (str == "1" || str == "2") {
+                    mass_mer = stoi(str);
+                    break;
+                }
+                cout << "Некорректный выбор! Введите 1 или 2." << endl;
+            }
+
+            while (true) {
+                cout << "Введите общую массу вещей: ";
+                string str;
+                getline(cin, str);
+                bool fl = !str.empty();
+                int dot_count = 0;
+                for (char c : str) {
+                    if (c == '.') dot_count++;
+                    else if (c < '0' || c > '9') { fl = false; break; }
+                }
+                if (dot_count > 1) fl = false;
+                if (fl) {
+                    current->weight = stod(str);
+                    if (mass_mer == 1 && current->weight >= 0.0 && current->weight <= 220.46) break;
+                    else if (mass_mer == 2 && current->weight >= 0.0 && current->weight <= 100.0) break;
+                }
+                cout << "Некорректный вес! Повторите ввод." << endl;
+            }
+            if (mass_mer == 1) {
+                current->weight *= 0.453592;
+            }
+        }
+        else {
+            current->weight = 0;
+        }
+        break;
+    }
+    }
+
+    cout << "\nЗапись под номером " << pos << " успешно обновлена!" << endl;
+}
+
 int main()
     {
     SetConsoleCP(1251);
@@ -497,12 +648,13 @@ int main()
         cout << "4. Вывести список" << endl;
         cout << "5. Авто-заполнение базы" << endl;
         cout << "6. Удалить элемент" << endl;
+        cout << "7. Изменить запись" << endl;
         cout << "0. Выход" << endl;
         cout << "Выберите пункт: ";
 
 
         if (!(cin >> choice)) {
-            cout << "Ошибка! Введите цифру от 0 до 6." << endl;
+            cout << "Ошибка! Введите цифру от 0 до 7." << endl;
             cin.clear();
             cin.ignore(10000, '\n');
             continue;
@@ -527,6 +679,9 @@ int main()
             break;
         case 6:
             vib(head);
+            break;
+        case 7:
+            izm(head);
             break;
         case 0:
             cout << "Выход из программы" << endl;
