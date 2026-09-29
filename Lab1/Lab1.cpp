@@ -263,6 +263,9 @@ int main()
             resh(passengers);
             break;
         case 4:
+            double r1, r2;
+            cin >> r1 >> r2;
+            cout << fixed << setprecision(3) << r1 * r2 / (r1 + r2);
             CoutPassengers(passengers);
             break;
         case 0:
