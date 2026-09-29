@@ -118,10 +118,10 @@ int main()
 		return 0;
 	}
 	while (true) {
-		std::cout << "\n================ ТЕКУЩЕЕ СОСТОЯНИЕ ================" << std::endl;
-		std::cout << " Диапазон: [" << count.getMin() << "; " << count.getMax() << "]" << std::endl;
-		std::cout << " Значение: " << count.getValue() << std::endl;
-		std::cout << "===================================================" << std::endl;
+		cout << "\n================ ТЕКУЩЕЕ СОСТОЯНИЕ ================" <<endl;
+		cout << " Диапазон: [" << count.getMin() << "; " << count.getMax() << "]" << endl;
+		cout << " Значение: " << count.getValue() <<endl;
+		cout << "===================================================" << endl;
 		cout << "1. Увеличить на 1" << endl;
 		cout << "2. Уменьшить на 1" << endl;
 		cout << "3. Увеличить на число " << endl;
