@@ -2,7 +2,8 @@
 #include <windows.h>
 #include <stdexcept>
 #include <locale>
-
+#include <string>
+#include <cctype>
 
 using namespace std;
 
@@ -13,13 +14,54 @@ private:
 	int value;
 	int min_range;
 	int max_range;
+
+	int prov(const string& rawInput, const string& fieldName)
+	{
+		// 1. Проверяем на пустую строку
+		if (rawInput.empty())
+		{
+			throw invalid_argument("Ошибка: Поле '" + fieldName + "' не может быть пустым!");
+		}
+
+		size_t i = 0;
+		if (rawInput[0] == '-')
+		{
+			if (rawInput.length() == 1) // Если введен только одиночный минус
+			{
+				throw invalid_argument("Ошибка: В поле '" + fieldName + "' введен только знак минуса!");
+			}
+			i = 1;
+		}
+
+		for (; i < rawInput.length(); i++)
+		{
+			// isdigit возвращает true только для символов от '0' до '9'
+			if (!isdigit(rawInput[i]))
+			{
+				throw invalid_argument("Ошибка: В поле '" + fieldName + "' допустимы только цифры (без пробелов, табуляций и букв)!");
+			}
+		}
+
+		// 3. Конвертация строки в int с проверкой на переполнение типа данных
+		try
+		{
+			return stoi(rawInput);
+		}
+		catch (const out_of_range&)
+		{
+			throw out_of_range("Ошибка: Число в поле '" + fieldName + "' слишком велико или мало для формата int!");
+		}
+	}
 public:
 	//constuctor(without parameters)
 	Counter() :value(0), min_range(0), max_range(10) {}
 
 	//constuctor(with parameters)
-	Counter(int val, int minVal, int maxVal)
+	Counter(string strVal, string strMin, string strMax)
 	{
+		int minVal = prov(strMin, "Минимальная граница");
+		int maxVal = prov(strMax, "Максимальная граница");
+		int val = prov(strVal, "Начальное значение");
 		if (minVal > maxVal)
 		{
 			throw invalid_argument("Ошибка: Минимальная граница не может быть больше максимальной!");
@@ -38,13 +80,17 @@ public:
 		max_range = maxVal;
 		value = val;
 	}
-	//virtual ~Counter() = default;
+	virtual ~Counter() = default;
 
 	//getter
 	int getValue() const { return value; }
 	int getMin() const { return min_range; }
 	int getMax() const { return max_range; }
 
+	int check(const string& str, const string& context)
+	{
+		return prov(str, context);
+	}
 	//setter
 	void setValue(int newVal)
 	{
@@ -77,9 +123,10 @@ class Counter1 : public Counter
 {
 public:
 	Counter1() : Counter() {}
-	Counter1(int val, int minVal, int maxVal) : Counter(val, minVal, maxVal) {}
-	void increaseOn(int step)
+	Counter1(string strVal, string strMin, string strMax) : Counter(strVal, strMin, strMax) {}
+	void increaseOn(string strStep)
 	{
+		int step = check(strStep, "Шаг увеличения");
 		if (step < 0)
 		{
 			throw invalid_argument("Ошибка: Шаг не может быть отрицательным!");
@@ -91,8 +138,9 @@ public:
 		setValue(getValue() + step);
 	}
 
-	void decreaseOn(int step)
+	void decreaseOn(string strStep)
 	{
+		int step = check(strStep, "Шаг уменьшения");
 		if (step < 0)
 		{
 			throw invalid_argument("Ошибка: Шаг не может быть отрицательным!");
@@ -110,25 +158,30 @@ int main()
 	SetConsoleCP(1251);
 	SetConsoleOutputCP(1251);
 	int choise = 0;
-	int minVal, maxVal, startVal;
-	cout << "Создание счетчика" << endl;
-	cout << "Введите минимальную границу (до -10000): ";
-	cin >> minVal;
-	cout << "Введите максимальную границу (до 10000): ";
-	cin >> maxVal;
-	cout << "Введите начальное значение: ";
-	cin >> startVal;
+	string minVal, maxVal, startVal;
 	Counter1 count;
-	try
-	{
-		count = Counter1(startVal, minVal, maxVal);
-		cout << "\nСчетчик создан!" << endl;
+	cout << "Создание счетчика" << endl;
+
+	while (true) {
+		try
+		{
+			cout << "Введите минимальную границу (до -10000): ";
+			getline(cin,minVal);
+			cout << "Введите максимальную границу (до 10000): ";
+			getline(cin,maxVal);
+			cout << "Введите начальное значение: ";
+			getline(cin,startVal);
+		
+			count = Counter1(startVal, minVal, maxVal);
+			cout << "\nСчетчик создан!" << endl;
+			break;
+		}
+		catch (const exception& e) {
+			cout << "\n" << e.what() << endl;
+			cout << "Повторите ввод.\n" << endl;
+		}
 	}
-	catch (const exception& e) {
-		cout << "\n" << e.what() << endl;
-		cout << "Выход из программы." << endl;
-		return 0;
-	}
+
 	while (true) {
 		cout << "\n================ ТЕКУЩЕЕ СОСТОЯНИЕ ================" << endl;
 		cout << " Диапазон: [" << count.getMin() << "; " << count.getMax() << "]" << endl;
@@ -147,7 +200,7 @@ int main()
 			break;
 		}
 		try {
-			int steps = 0;
+			string steps;
 			switch (choise) {
 			case 1:
 				count.increase();
@@ -159,13 +212,13 @@ int main()
 				break;
 			case 3:
 				cout << "Введите число для увеличения: ";
-				cin >> steps;
+				getline(cin,steps);
 				count.increaseOn(steps);
 				cout << "Значение увеличено на " << steps << "." << endl;
 				break;
 			case 4:
 				cout << "Введите число для уменьшения: ";
-				cin >> steps;
+				getline(cin, steps);
 				count.decreaseOn(steps);
 				cout << "Значение уменьшено на " << steps << "." << endl;
 				break;
